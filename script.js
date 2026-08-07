@@ -99,7 +99,7 @@
 
   function initLogin() {
     if (localStorage.getItem("currentUser")) {
-      window.location.href = "cindex.html";
+      window.location.href = "index.html";
       return;
     }
     const form = document.getElementById("loginForm");
@@ -120,7 +120,7 @@
         members.push({ name, phone });
         saveJSON("members", members);
       }
-      window.location.href = "cindex.html";
+      window.location.href = "index.html";
     });
 
     document.getElementById("passwordToggle")?.addEventListener("click", () => {
