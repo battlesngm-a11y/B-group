@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BBA Group</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script>
+if (!localStorage.getItem("currentUser")) {
+  window.location.href = "login.html";
+}
+</script>
+</head>
+
+<body>
+
+<header>
+  <h2>👋 Welcome, <span id="username"></span></h2>
+  <button onclick="toggleDarkMode()">🌙</button>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div id="home" class="page active">
+    <h3>📢 Dashboard</h3>
+    <p>Welcome to your group app 🚀</p>
+  </div>
+
+  <div id="members" class="page">
+    <h3>👥 Members</h3>
+    <ul id="membersList"></ul>
+  </div>
+
+  <div id="notes" class="page">
+    <h3>📂 Notes</h3>
+    <ul id="fileList"></ul>
+  </div>
+
+  <div id="profile" class="page">
+    <h3>👤 Profile</h3>
+    <p>Name: <span id="profileName"></span></p>
+  </div>
+
+</div>
+
+<!-- FLOAT BUTTON -->
+<button class="fab" onclick="uploadFile()">+</button>
+
+<!-- BOTTOM NAV -->
+<nav>
+  <button onclick="showPage('home')"><i class="fa fa-home"></i></button>
+  <button onclick="showPage('members')"><i class="fa fa-users"></i></button>
+  <button onclick="showPage('notes')"><i class="fa fa-folder"></i></button>
+  <button onclick="showPage('profile')"><i class="fa fa-user"></i></button>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
