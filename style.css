@@ -1,0 +1,65 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f2f2f2;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: #4CAF50;
+  color: white;
+}
+
+/* MAIN */
+.main {
+  padding: 15px;
+  padding-bottom: 80px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: #ff5722;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  background: white;
+  border-top: 1px solid #ccc;
+}
+
+nav button {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  background: none;
+  font-size: 18px;
+}
+
+/* DARK MODE */
+.dark {
+  background: #121212;
+  color: white;
+}
