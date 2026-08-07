@@ -6,10 +6,11 @@
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
     catch { return fallback; }
   };
-
   const saveJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-
   const initials = (name = "User") => name.trim().split(/\s+/).map(x => x[0]).join("").slice(0, 2).toUpperCase();
+  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+  }[c]));
 
   function applyTheme() {
     const dark = localStorage.getItem("darkMode") === "true";
@@ -30,33 +31,76 @@
     const page = document.getElementById(id);
     if (page) page.classList.add("active");
     document.querySelectorAll(".nav-item").forEach(item => item.classList.toggle("active", item.dataset.page === id));
+    if (id === "chat") renderChat();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function loadFiles() {
+  function renderFiles() {
     const files = getJSON("files");
     const list = document.getElementById("fileList");
     const recent = document.getElementById("recentFiles");
     const count = document.getElementById("fileCount");
     if (count) count.textContent = files.length;
 
+    const card = f => `
+      <div class="note-card">
+        <span class="file-icon"><i class="fa-solid fa-file-lines"></i></span>
+        <div class="note-content">
+          <strong>${escapeHTML(f.name)}</strong>
+          <small>Shared by ${escapeHTML(f.user || "Unknown")} · ${f.size ? formatBytes(f.size) : "Note"}</small>
+        </div>
+        ${f.dataUrl ? `<a class="download-btn" href="${f.dataUrl}" download="${escapeHTML(f.name)}" title="Download"><i class="fa-solid fa-download"></i></a>` : ""}
+      </div>`;
+
     const render = (container, items, emptyText) => {
       if (!container) return;
       if (!items.length) {
         container.className = "card-list empty-state";
         container.innerHTML = `<i class="fa-regular fa-folder-open"></i><p>${emptyText}</p>`;
-        return;
+      } else {
+        container.className = "card-list";
+        container.innerHTML = items.map(card).join("");
       }
-      container.className = "card-list";
-      container.innerHTML = items.map((f, i) => `
-        <div class="note-card">
-          <span class="file-icon"><i class="fa-solid fa-file-lines"></i></span>
-          <div class="note-content"><strong>${escapeHTML(f.name)}</strong><small>Shared by ${escapeHTML(f.user || "Unknown")}</small></div>
-          <span class="note-number">#${String(i + 1).padStart(2, "0")}</span>
-        </div>`).join("");
     };
-    render(list, files, "No notes shared yet. Add your first note.");
-    render(recent, files.slice(-3).reverse(), "No recent notes.");
+    render(list, files.slice().reverse(), "No notes yet. Use + to add a real file.");
+    render(recent, files.slice().reverse().slice(0, 3), "No recent notes.");
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function addFile(file) {
+    if (!file) return;
+    const max = 2 * 1024 * 1024;
+    if (file.size > max) {
+      alert("For this GitHub-only version, please choose a file under 2 MB.");
+      return;
+    }
+    const user = localStorage.getItem("currentUser") || "Unknown";
+    const reader = new FileReader();
+    reader.onload = () => {
+      const files = getJSON("files");
+      files.push({
+        name: file.name,
+        user,
+        size: file.size,
+        type: file.type,
+        dataUrl: reader.result,
+        createdAt: Date.now()
+      });
+      try {
+        saveJSON("files", files);
+        renderFiles();
+        loadAdmin();
+      } catch {
+        alert("Storage limit reached. Please remove some files or use smaller files.");
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   function loadMembers() {
@@ -77,24 +121,40 @@
       </div>`).join("");
   }
 
-  function uploadFile() {
-    const name = prompt("Enter the note or file name:");
-    if (!name || !name.trim()) return;
-    const user = localStorage.getItem("currentUser") || "Unknown";
-    const files = getJSON("files");
-    files.push({ name: name.trim(), user, createdAt: Date.now() });
-    saveJSON("files", files);
-    loadFiles();
-    loadAdmin();
+  function renderChat() {
+    const box = document.getElementById("chatMessages");
+    if (!box) return;
+    const messages = getJSON("chatMessages");
+    const current = localStorage.getItem("currentUser") || "User";
+    if (!messages.length) {
+      box.innerHTML = `<div class="empty-state"><i class="fa-regular fa-comments"></i><p>No messages yet. Start the conversation.</p></div>`;
+      return;
+    }
+    box.innerHTML = messages.map(m => {
+      const mine = m.user === current;
+      return `<div class="chat-row ${mine ? "mine" : ""}">
+        <span class="chat-avatar">${initials(m.user)}</span>
+        <div class="chat-bubble">
+          <small>${escapeHTML(m.user)}</small>
+          <p>${escapeHTML(m.text)}</p>
+          <time>${new Date(m.createdAt).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</time>
+        </div>
+      </div>`;
+    }).join("");
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendMessage(text) {
+    const user = localStorage.getItem("currentUser") || "User";
+    const messages = getJSON("chatMessages");
+    messages.push({ user, text: text.trim(), createdAt: Date.now() });
+    saveJSON("chatMessages", messages.slice(-200));
+    renderChat();
   }
 
   function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "login.html";
-  }
-
-  function escapeHTML(value) {
-    return String(value).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[c]));
   }
 
   function initLogin() {
@@ -109,7 +169,6 @@
       const name = document.getElementById("name").value.trim();
       const phone = document.getElementById("phone").value.replace(/\D/g, "");
       const password = document.getElementById("password").value;
-
       if (name.length < 2) return error.textContent = "Please enter your full name.";
       if (phone.length < 10) return error.textContent = "Please enter a valid phone number.";
       if (password.length < 4) return error.textContent = "Password must contain at least 4 characters.";
@@ -146,9 +205,24 @@
 
     document.getElementById("logoutBtn")?.addEventListener("click", logout);
     document.getElementById("profileLogout")?.addEventListener("click", logout);
+    document.getElementById("adminOpen")?.addEventListener("click", () => window.location.href = "admin.html");
     document.getElementById("themeToggle")?.addEventListener("click", toggleDarkMode);
+    document.getElementById("filePicker")?.addEventListener("change", e => {
+      addFile(e.target.files[0]);
+      e.target.value = "";
+    });
+    document.getElementById("chatForm")?.addEventListener("submit", e => {
+      e.preventDefault();
+      const input = document.getElementById("chatInput");
+      if (input.value.trim()) {
+        sendMessage(input.value);
+        input.value = "";
+        input.focus();
+      }
+    });
     loadMembers();
-    loadFiles();
+    renderFiles();
+    renderChat();
   }
 
   function loadAdmin() {
@@ -166,8 +240,14 @@
 
     const fileList = document.getElementById("adminFiles");
     if (fileList) fileList.innerHTML = files.length
-      ? files.slice().reverse().map(f => `<div class="note-card"><span class="file-icon"><i class="fa-solid fa-file-lines"></i></span><div class="note-content"><strong>${escapeHTML(f.name)}</strong><small>Shared by ${escapeHTML(f.user || "Unknown")}</small></div></div>`).join("")
+      ? files.slice().reverse().map(f => `<div class="note-card"><span class="file-icon"><i class="fa-solid fa-file-lines"></i></span><div class="note-content"><strong>${escapeHTML(f.name)}</strong><small>Shared by ${escapeHTML(f.user || "Unknown")} · ${f.size ? formatBytes(f.size) : "Note"}</small></div>${f.dataUrl ? `<a class="download-btn" href="${f.dataUrl}" download="${escapeHTML(f.name)}"><i class="fa-solid fa-download"></i></a>` : ""}</div>`).join("")
       : `<div class="empty-state"><i class="fa-regular fa-folder-open"></i><p>No shared notes.</p></div>`;
+
+    const chatList = document.getElementById("adminChat");
+    const messages = getJSON("chatMessages");
+    if (chatList) chatList.innerHTML = messages.length
+      ? messages.slice().reverse().map(m => `<div class="admin-row"><span class="chat-avatar">${initials(m.user)}</span><div><strong>${escapeHTML(m.user)}</strong><small>${escapeHTML(m.text)}</small></div><small>${new Date(m.createdAt).toLocaleString()}</small></div>`).join("")
+      : `<div class="empty-state"><i class="fa-regular fa-comments"></i><p>No chat messages.</p></div>`;
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -180,6 +260,4 @@
   });
 
   window.showPage = showPage;
-  window.uploadFile = uploadFile;
-  window.toggleDarkMode = toggleDarkMode;
 })();
