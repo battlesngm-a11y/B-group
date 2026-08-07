@@ -52,3 +52,30 @@ function loadMembers() {
   });
 }
 loadMembers();
+// LOGIN FUNCTION
+let MAIN_PASSWORD = "bba123";
+
+function login() {
+  let name = document.getElementById("name").value;
+  let phone = document.getElementById("phone").value;
+  let pass = document.getElementById("password").value;
+
+  if (!name || !phone || !pass) {
+    alert("Fill all fields");
+    return;
+  }
+
+  if (pass === MAIN_PASSWORD) {
+
+    localStorage.setItem("currentUser", name);
+
+    let members = JSON.parse(localStorage.getItem("members")) || [];
+    members.push({ name, phone });
+    localStorage.setItem("members", JSON.stringify(members));
+
+    window.location.href = "index.html";
+
+  } else {
+    alert("Wrong Password ❌");
+  }
+}
