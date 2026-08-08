@@ -78,7 +78,7 @@ const storage = getStorage(app);
   const ADMIN_EMAIL = "battle@gmail.com";
 */
 
-const ADMIN_EMAIL = "YOUR_ADMIN_EMAIL@gmail.com";
+const ADMIN_EMAIL = "YOUR_ADMIN_aag@gmail.com";
 
 
 /* ============================================================
