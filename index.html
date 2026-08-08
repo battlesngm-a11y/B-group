@@ -103,6 +103,28 @@
       <button class="nav-item" data-page="profile" onclick="showPage('profile')"><i class="fa-solid fa-user"></i><span>Profile</span></button>
     </nav>
   </div>
-  <script src="script.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD4aCWUNbGwGFgIxr5bXEfCPolbiEbqLjk",
+    authDomain: "bba-group.firebaseapp.com",
+    projectId: "bba-group",
+    storageBucket: "bba-group.firebasestorage.app",
+    messagingSenderId: "525637918576",
+    appId: "1:525637918576:web:b562987874701888dab9b5",
+    measurementId: "G-8M4CF1QRJD"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+
+<script src="script.js"></script>
 </body>
 </html>
